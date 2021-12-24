@@ -1,48 +1,44 @@
-from flask import Flask
-from flask import request,redirect,render_template,url_for
-from werkzeug.utils import secure_filename
-import os
-import easyocr
-from PIL import ImageFilter
+from flask import Flask, render_template, request
+import os, pytesseract
+from flask_uploads import UploadSet,configure_uploads, IMAGES
 from PIL import Image
-import easyocr
-import cv2
-from matplotlib import pyplot as plt
-app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = './media'
 
-@app.route('/')
-def index():
+project_dir = os.path.dirname(os.path.abspath(_file_))
+
+app = Flask(_name_, static_url_path= '', static_folder='static', template_folder ='templates')
+
+photos = UploadSet('photos', IMAGES)
+
+app.config['DEBUG'] = True
+app.config['UPLOAD_FOLDER'] = 'images'
+
+#Class for Image to Text
+class GetText(object):
+
+    def _init_(self,file):
+        #pytesseract.pytesseract.tesseract_cmd = r'/Library/Frameworks/Python.framework/Versions/3.7/lib/python3.7/site-packages/pytesseract'
+
+        #pytesseract.pytesseract.tesseract_cmd = r"/Library/Frameworks/Python.framework/Versions/3.7/bin/pytesseract"
+        self.file = pytesseract.image_to_string(Image.open(project_dir + '/images/'+ file))
+
+@app.route('/', methods = ['GET', 'POST'])
+def home():
+    if request.method == 'POST':
+        if 'photo' not in request.files:
+            return 'there is no photo in form'
+        name = request.form['img-name'] + '.jpg'
+        photo = request.files['photo']
+        path = os.path.join(app.config['UPLOAD_FOLDER'], name)
+        photo.save(path)
+
+        textObject = GetText(name)
+        #print('TEXT OBJECT'+ textObject.file)
+
+        return textObject.file
     return render_template('index.html')
 
-@app.route('/submitImage/',methods=['POST',])
-def submitImage():
-    image = request.files['ocrImage']
-    filename = secure_filename(image.filename)
-    image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-    img = Image.open(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-    reader = easyocr.Reader(['en'])
-    result = reader.readtext(filename)
-    top_left = tuple(result[0][0][0])
-    bottom_right = tuple(result[0][0][2])
-    text = result[0][1]
-    font = cv2.FONT_HERSHEY_SIMPLEX
-    img = cv2.imread(filename)
-    spacer = 100
-    alltext = ''
-    for detection in result:
-        top_left = tuple(detection[0][0])
-        bottom_right = tuple(detection[0][2])
-        text = detection[1]
-        alltext += text + ' '
-        img = cv2.rectangle(img, top_left, bottom_right, (0, 255, 0), 3)
-        spacer += 15
-        #text = pytesseract.image_to_string(img)
-    f = open(os.path.join(app.config['UPLOAD_FOLDER'], filename)+'.txt','w')
-    f.write(alltext)
-    f.close()
-    return render_template('textFile.html',text=alltext,filename=f)
-
-
-if __name__ == '__main__':
-    app.run('0.0.0.0',8000)
+if _name_ == '_main_':
+    app.run()
+    
+#pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+#print(pytesseract.image_to_string(Image.open('D:/Flask/alt.jpg')))
