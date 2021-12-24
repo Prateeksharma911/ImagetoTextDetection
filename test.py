@@ -1,22 +1,14 @@
-from flask.typing import StatusCode
 
-try:
-    from app import app
-    import unittest
-
-except Exception as e:
-    print("Some modules are missing {}".format(e))
+import unittest
 
 
-class FlaskTest(unittest.TestCase):
+class TestSum(unittest.TestCase):
 
-    #check for response 404
-    def test_index(self):
-        tester = app.test_client(self)
-        response = tester.get("/fo")
-        StatusCode = response.status_code
-        self.assertEqual(StatusCode,404)
+    def test_sum(self):
+        self.assertEqual(sum([1, 2, 3]), 6, "Should be 6")
 
+    def test_sum_tuple(self):
+        self.assertEqual(sum((1, 2, 2)), 6, "Should be 6")
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()
